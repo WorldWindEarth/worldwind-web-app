@@ -1,2 +1,2 @@
 # WorldWind Web App Template
-A template for creating a WorldWInd web app with Bootstrap and Knockout 
+A template for creating a WorldWind web app with Bootstrap and Knockout.
