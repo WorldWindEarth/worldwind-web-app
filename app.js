@@ -6,11 +6,11 @@ $(document).ready(function () {
     // Without your own key you will be using a limited WorldWind developer's key.
     // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
     const BING_API_KEY = "";
-    if (BING_API_KEY === null || BING_API_KEY === "") {
-        console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
-    } else {
+    if (BING_API_KEY) {
         // Initialize WorldWind properties before creating the first WorldWindow
         WorldWind.BingMapsKey = BING_API_KEY;
+    } else {
+        console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
     }
 
     // Set the MapQuest API key used for the Nominatim service.
@@ -431,7 +431,7 @@ $(document).ready(function () {
                     let latitude = parseFloat(tokens[0]);
                     let longitude = parseFloat(tokens[1]);
                     // Center the globe on the lat, lon
-                    globe.goTo(new WorldWind.Location(latitude, longitude));
+                    globe.wwd.goTo(new WorldWind.Location(latitude, longitude));
                 } else {
                     // Treat the text as an address or place name
                     self.geocoder.lookup(queryString, function (geocoder, results) {
