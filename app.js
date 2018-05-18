@@ -579,14 +579,19 @@ $(document).ready(function () {
         enabled: false,
         detailControl: 1.5
     });
+    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
+        category: "base",
+        enabled: false
+    });
     globe.addLayer(new WorldWind.BingRoadsLayer(), {
         category: "overlay",
         enabled: false,
         detailControl: 1.5,
         opacity: 0.80
     });
-    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
+    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "overlay", {
         category: "overlay",
+        displayName: "OpenStreetMap overlay by EOX",
         enabled: false,
         opacity: 0.80
     });
