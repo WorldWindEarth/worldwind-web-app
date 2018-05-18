@@ -7,16 +7,16 @@ $(document).ready(function () {
     // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
     const BING_API_KEY = "";
     if (BING_API_KEY) {
-// Initialize WorldWind properties before creating the first WorldWindow
+        // Initialize WorldWind properties before creating the first WorldWindow
         WorldWind.BingMapsKey = BING_API_KEY;
     } else {
         console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
     }
-
-// Set the MapQuest API key used for the Nominatim service.
-// Get your own key at https://developer.mapquest.com/
-// Without your own key you will be using a limited WorldWind developer's key.
+    // Set the MapQuest API key used by their Nominatim service.
+    // Get your own key at https://developer.mapquest.com/
+    // Without your own key you will be using a limited WorldWind developer's key.
     const MAPQUEST_API_KEY = "";
+    
     /**
      * The Globe encapulates the WorldWindow object (wwd) and provides application
      * specific logic for interacting with layers.
@@ -123,8 +123,18 @@ $(document).ready(function () {
 
             // Assign a unique layer ID to ease layer management 
             layer.uniqueId = this.nextLayerId++;
-            // Add the layer to the globe
-            this.wwd.addLayer(layer);
+            
+            // Insert the layer within the given category
+            // Find the index of first layer within the layer's category.
+            let index = this.wwd.layers.findIndex(function(element){return element.category === layer.category;});
+            if (index < 0) {
+                // Add to the end of the overall layer list
+                this.wwd.addLayer(layer);
+            } else {
+                // Add the layer to the end the category
+                let numLayers = this.getLayers(layer.category).length;
+                this.wwd.insertLayer(index + numLayers, layer);
+            }
             // Signal a change in the category
             this.updateCategoryTimestamp(layer.category);
         }
@@ -138,6 +148,8 @@ $(document).ready(function () {
          */
         addLayerFromWms(serviceAddress, layerName, options) {
             const self = this;
+
+            // Create a GetCapabilities request URL
             let url = serviceAddress.split('?')[0];
             url += "?service=wms";
             url += "&request=getcapabilities";
@@ -154,7 +166,7 @@ $(document).ready(function () {
 
             // Create a request to retrieve the data
             let xhr = new XMLHttpRequest();
-            xhr.open("GET", url, false); // performing a syncronous request to ensure proper layer ordering
+            xhr.open("GET", url, true); // performing an asynchronous request 
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === XMLHttpRequest.DONE) {
                     if (xhr.status === 200) {
@@ -164,6 +176,7 @@ $(document).ready(function () {
                     }
                 }
             };
+            // 
             xhr.send();
         }
 
@@ -573,7 +586,8 @@ $(document).ready(function () {
     });
     globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
         category: "overlay",
-        enabled: false
+        enabled: false,
+        opacity: 0.80
     });
     globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
         category: "overlay",
