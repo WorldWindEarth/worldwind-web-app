@@ -163,6 +163,9 @@ $(document).ready(function () {
                 var layerConfig = WorldWind.WmsLayer.formLayerConfiguration(layerForDisplay);
                 // Create the layer and add it to the globe
                 var wmsLayer = new WorldWind.WmsLayer(layerConfig);
+                // Extract the bbox out of the WMS layer configuration
+                options.bbox = layerConfig.sector;
+                // Add the layer to the globe
                 self.addLayer(wmsLayer, options);
             };
 
@@ -233,7 +236,63 @@ $(document).ready(function () {
             let layers = this.wwd.layers.filter(layer => layer.displayName === name);
             return layers.length > 0 ? layers[0] : null;
         }
+        /**
+         * Moves the WorldWindow camera to the center coordinates of the layer, and then zooms in (or out)
+         * to provide a view of the layer as complete as possible.
+         * @param {LayerProxy} layer Theelected for zooming
+         * TODO: Make this to work when Sector/Bounding box crosses the 180° meridian
+         */
+        zoomToLayer(layer) {
+            // Verify layer sector (bounding box in 2D terms) existence and
+            // do not center the camera if layer covers the whole globe.
+            let layerSector = layer.bbox; 
+            if (!layerSector) { // null or undefined.
+                console.error("zoomToLayer: No Layer sector / bounding box undefined!");
+                return;
+            }
+            // Comparing each boundary of the sector to verify layer global coverage.
+            if (layerSector.maxLatitude >= 90 &&
+                layerSector.minLatitude <= -90 &&
+                layerSector.maxLongitude >= 180 &&
+                layerSector.minLongitude <= -180) {
+                console.log("zoomToLayer: The selected layer covers the full globe. No camera centering needed.");
+                return;
+            }
+            // Obtain layer center
+            let center = findLayerCenter(layerSector);
+            let range = computeZoomRange(layerSector);
+            let position = new WorldWind.Position(center.latitude, center.longitude, range);
+            // Move camera to position
+            this.wwd.goTo(position);
 
+            // Classical formula to obtain middle point between two coordinates
+            function findLayerCenter(layerSector) {
+                var centerLatitude = (layerSector.maxLatitude + layerSector.minLatitude) / 2;
+                var centerLongitude = (layerSector.maxLongitude + layerSector.minLongitude) / 2;
+                var layerCenter = new WorldWind.Location(centerLatitude, centerLongitude);
+                return layerCenter;
+            }
+
+            // Zoom level is obtained following this simple method: Calculate approx arc length of the
+            // sectors' diagonal, and set that as the range (altitude) of the camera.
+            function computeZoomRange(layerSector) {
+                var verticalBoundary = layerSector.maxLatitude - layerSector.minLatitude;
+                var horizontalBoundary = layerSector.maxLongitude - layerSector.minLongitude;
+                // Calculate diagonal angle between boundaries (simple pythagoras formula, we don't need to
+                // consider vectors or great circles).
+                var diagonalAngle = Math.sqrt(Math.pow(verticalBoundary, 2) + Math.pow(horizontalBoundary, 2));
+                // If the diagonal angle is equal or more than an hemisphere (180°) don't change zoom level.
+                // Else, use the diagonal arc length as camera altitude.
+                if (diagonalAngle >= 180) {
+                    return null;
+                } else {
+                    // Gross approximation of longitude of arc in km
+                    // (assuming spherical Earth with radius of 6,371 km. Accuracy is not needed for this).
+                    var diagonalArcLength = (diagonalAngle / 360) * (2 * 3.1416 * 6371000);
+                    return diagonalArcLength;
+                }
+            }
+        }
     }
 
     /**
@@ -247,8 +306,7 @@ $(document).ready(function () {
         observableArray.removeAll();
         // Reverse the order of the layers to the top-most layer is first
         layers.reverse().forEach(layer => observableArray.push(layer));
-    }
-    ;
+    };
 
     /**
      * Layers view mode.
@@ -267,6 +325,10 @@ $(document).ready(function () {
         // Button click event handler
         self.toggleLayer = function (layer) {
             globe.toggleLayer(layer);
+            // Zoom to the layer if it has a bbox assigned to it
+            if (layer.enabled && layer.bbox) {
+                globe.zoomToLayer(layer);
+            }
         };
     }
 
@@ -624,7 +686,7 @@ $(document).ready(function () {
         category: "debug",
         enabled: false
     });
-
+    
 
     // Activate the Knockout bindings between our view models and the html
     let layers = new LayersViewModel(globe);
