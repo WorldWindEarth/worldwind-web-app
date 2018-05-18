@@ -687,6 +687,12 @@ $(document).ready(function () {
         enabled: false
     });
     
+    // NASA RECOVER Demo
+    globe.addLayerFromWms("http://recover.giscenter.isu.edu/arcgis/services/RECOVER3_BrianheadFire_UT/dNBR/MapServer/WMSServer", "0", {
+        category: "overlay",
+        enabled: false,
+        opacity: 1.0
+    });    
 
     // Activate the Knockout bindings between our view models and the html
     let layers = new LayersViewModel(globe);
