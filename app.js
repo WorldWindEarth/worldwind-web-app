@@ -591,7 +591,7 @@ $(document).ready(function () {
         opacity: 0.80
     });
     globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
-        category: "overlay",
+        category: "data",
         displayName: "Markers",
         enabled: true
     });
