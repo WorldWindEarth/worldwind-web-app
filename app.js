@@ -7,18 +7,16 @@ $(document).ready(function () {
     // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
     const BING_API_KEY = "";
     if (BING_API_KEY) {
-        // Initialize WorldWind properties before creating the first WorldWindow
+// Initialize WorldWind properties before creating the first WorldWindow
         WorldWind.BingMapsKey = BING_API_KEY;
     } else {
         console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
     }
 
-    // Set the MapQuest API key used for the Nominatim service.
-    // Get your own key at https://developer.mapquest.com/
-    // Without your own key you will be using a limited WorldWind developer's key.
+// Set the MapQuest API key used for the Nominatim service.
+// Get your own key at https://developer.mapquest.com/
+// Without your own key you will be using a limited WorldWind developer's key.
     const MAPQUEST_API_KEY = "";
-
-
     /**
      * The Globe encapulates the WorldWindow object (wwd) and provides application
      * specific logic for interacting with layers.
@@ -30,7 +28,6 @@ $(document).ready(function () {
         constructor(canvasId, projectionName) {
             // Create a WorldWindow globe on the specified HTML5 canvas
             this.wwd = new WorldWind.WorldWindow(canvasId);
-
             // Projection support
             this.roundGlobe = this.wwd.globe;
             this.flatGlobe = null;
@@ -40,11 +37,9 @@ $(document).ready(function () {
 
             // A map of category and 'observable' timestamp pairs
             this.categoryTimestamps = new Map();
-
             // Add a BMNGOneImageLayer background layer. We're overriding the default 
             // minimum altitude of the BMNGOneImageLayer so this layer always available.
             this.addLayer(new WorldWind.BMNGOneImageLayer(), {category: "background", minActiveAltitude: 0});
-
         }
 
         get projectionNames() {
@@ -135,6 +130,44 @@ $(document).ready(function () {
         }
 
         /**
+         * Add a WMS layer to the globe and applies options object properties to the 
+         * the layer.
+         * @param {String} serviceAddress Service address for the WMS map server
+         * @param {String} layerName Layer name (not title) as defined in the capabilities document
+         * @param {Object|null} options
+         */
+        addLayerFromWms(serviceAddress, layerName, options) {
+            const self = this;
+            let url = serviceAddress.split('?')[0];
+            url += "?service=wms";
+            url += "&request=getcapabilities";
+
+            let parseCapabilities = function (xml) {
+                // Create a WmsCapabilities object from the returned xml
+                var wmsCapabilities = new WorldWind.WmsCapabilities(xml);
+                var layerForDisplay = wmsCapabilities.getNamedLayer(layerName);
+                var layerConfig = WorldWind.WmsLayer.formLayerConfiguration(layerForDisplay);
+                // Create the layer and add it to the globe
+                var wmsLayer = new WorldWind.WmsLayer(layerConfig);
+                self.addLayer(wmsLayer, options);
+            };
+
+            // Create a request to retrieve the data
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", url, false); // performing a syncronous request to ensure proper layer ordering
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        parseCapabilities(xhr.responseXML);
+                    } else {
+                        alert("XMLHttpRequest to " + url + " failed with status code " + xhr.status);
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        /**
          * Toggles the enabled state of the given layer and updates the layer
          * catetory timestamp. Applies a rule to the 'base' layers the ensures
          * only one base layer is enabled.
@@ -186,6 +219,7 @@ $(document).ready(function () {
             let layers = this.wwd.layers.filter(layer => layer.displayName === name);
             return layers.length > 0 ? layers[0] : null;
         }
+
     }
 
     /**
@@ -265,7 +299,7 @@ $(document).ready(function () {
         // Callback invoked by the Click/Drop event handler
         self.dropCallback = null;
         // The object dropped on the globe at the click location
-        self.dropObject = null;        
+        self.dropObject = null;
         // Observable boolean indicating that click/drop is armed
         self.isDropArmed = ko.observable(false);
         // Change the globe's cursor to crosshairs when drop is armed
@@ -277,7 +311,6 @@ $(document).ready(function () {
             self.dropCallback = self.dropMarkerCallback;
             self.dropObject = self.selectedMarkerImage();
         };
-
         // Set up the common placemark attributes used in the dropMarkerCallback
         let commonAttributes = new WorldWind.PlacemarkAttributes(null);
         commonAttributes.imageScale = 1;
@@ -299,18 +332,15 @@ $(document).ready(function () {
         self.dropMarkerCallback = function (position) {
             let attributes = new WorldWind.PlacemarkAttributes(commonAttributes);
             attributes.imageSource = self.selectedMarkerImage();
-
             let placemark = new WorldWind.Placemark(position, /*eyeDistanceScaling*/ true, attributes);
             placemark.label = "Lat " + position.latitude.toPrecision(4).toString() + "\n" + "Lon " + position.longitude.toPrecision(5).toString();
             placemark.altitudeMode = WorldWind.CLAMP_TO_GROUND;
             placemark.eyeDistanceScalingThreshold = 2500000;
-
             // Add the placemark to the layer and to the observable array
             let layer = globe.findLayerByName("Markers");
             layer.addRenderable(placemark);
             markers.addMarker(placemark);
         };
-
         /**
          * Handles a click on the WorldWindow. If a "drop" action callback has been
          * defined, it invokes the function with the picked location.
@@ -347,7 +377,6 @@ $(document).ready(function () {
             self.isDropArmed(false);
             event.stopImmediatePropagation();
         };
-
         // Assign a click event handlers to the WorldWindow for Click/Drop support
         globe.wwd.addEventListener('click', self.handleClick);
         globe.wwd.addEventListener('touchend', self.handleClick);
@@ -363,7 +392,6 @@ $(document).ready(function () {
         var self = this;
         // Observable array of markers displayed in the view
         self.markers = ko.observableArray();
-
         /**
          * Adds a marker to the view model
          * @param {WorldWind.Placemark} marker
@@ -371,7 +399,6 @@ $(document).ready(function () {
         self.addMarker = function (marker) {
             self.markers.push(marker);
         };
-
         /** 
          * "Goto" function centers the globe on the given marker.
          * @param {WorldWind.Placemark} marker
@@ -379,7 +406,6 @@ $(document).ready(function () {
         self.gotoMarker = function (marker) {
             globe.wwd.goTo(new WorldWind.Location(marker.position.latitude, marker.position.longitude));
         };
-
         /** 
          * "Edit" function invokes a modal dialog to edit the marker attributes.
          * @param {WorldWind.Placemark} marker
@@ -389,7 +415,6 @@ $(document).ready(function () {
             //                        var options = {};
             //                        $('#editMarkerModal').modal(options)
         };
-
         /** 
          * "Remove" function removes a marker from the globe.
          * @param {WorldWind.Placemark} marker
@@ -546,6 +571,10 @@ $(document).ready(function () {
         detailControl: 1.5,
         opacity: 0.80
     });
+    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
+        category: "overlay",
+        enabled: false
+    });
     globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
         category: "overlay",
         displayName: "Markers",
@@ -590,8 +619,6 @@ $(document).ready(function () {
     ko.applyBindings(tools, document.getElementById('tools'));
     ko.applyBindings(search, document.getElementById('search'));
     ko.applyBindings(preview, document.getElementById('preview'));
-
-
     // Auto-collapse the main menu when its button items are clicked
     $('.navbar-collapse a[role="button"]').click(function () {
         $('.navbar-collapse').collapse('hide');
