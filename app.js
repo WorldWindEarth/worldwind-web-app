@@ -28,6 +28,8 @@ $(document).ready(function () {
         constructor(canvasId, projectionName) {
             // Create a WorldWindow globe on the specified HTML5 canvas
             this.wwd = new WorldWind.WorldWindow(canvasId);
+            // Layer management support
+            this.nextLayerId = 1;
             // Projection support
             this.roundGlobe = this.wwd.globe;
             this.flatGlobe = null;
@@ -176,7 +178,6 @@ $(document).ready(function () {
                     }
                 }
             };
-            // 
             xhr.send();
         }
 
