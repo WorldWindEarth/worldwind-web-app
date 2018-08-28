@@ -358,17 +358,18 @@ $(document).ready(function () {
      * @returns {ToolsViewModel}
      */
     function ToolsViewModel(globe, markers) {
-        var self = this;
-        // An array of marker images
+        var self = this,
+          imagePath = "https://unpkg.com/worldwindjs@1.5.90/build/dist/images/pushpins/";
+        // An array of pushpin marker images
         self.markerPalette = [
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-red.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-green.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-blue.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-orange.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-teal.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-purple.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-white.png",
-            "https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/images/pushpins/castshadow-black.png"
+            imagePath + "castshadow-red.png",
+            imagePath + "castshadow-green.png",
+            imagePath + "castshadow-blue.png",
+            imagePath + "castshadow-orange.png",
+            imagePath + "castshadow-teal.png",
+            imagePath + "castshadow-purple.png",
+            imagePath + "castshadow-white.png",
+            imagePath + "castshadow-black.png"
         ];
         // The currently selected marker icon 
         self.selectedMarkerImage = ko.observable(self.markerPalette[0]);
