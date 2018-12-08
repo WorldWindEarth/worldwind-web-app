@@ -1,8 +1,8 @@
 # WorldWindJS Web App Template
-A template for creating a WorldWindJS web app with Bootstrap and Knockout.
+A template for creating a WorldWindJS web app with Bootstrap and Knockout. Check out the  [demmo](https://emxsys.github.io/worldwind-web-app) 
 
 This project template lets you quickly build a [WorldWind](https://worldwind.arc.nasa.gov/web/) 
-web app using community supported [WorldWindJS](https://emxsys.github.io/worldwindjs) library with 
+web app using the community supported [WorldWindJS](https://emxsys.github.io/worldwindjs) library with 
 [Bootstrap](https://getbootstrap.com/docs/4.0/getting-started/introduction/) and 
 [KnockoutJS](http://knockoutjs.com/index.html). You will build a feature-rich, responsive, 
 customizable web app ready to be deployed to your site. This template includes:
@@ -10,11 +10,10 @@ customizable web app ready to be deployed to your site. This template includes:
 - Initializing WorldWind with 3D globes and/or 2D maps
 - Configuring and managing layers and settings
 - Place name searches and geocoding
-- Creating placemarks
+- Creating placemarks (markers)
 - Going to locations
 - Multi-globe support
 
-Here's what this template looks like online in GitHub pages: [worldwind-web-app](https://emxsys.github.io/worldwind-web-app) 
 
 ## Quick Start
 
