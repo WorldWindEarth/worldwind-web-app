@@ -1,3 +1,9 @@
+/* 
+ * Copyright (c) 2018 Bruce Schubert.
+ * The MIT License
+ * http://www.opensource.org/licenses/mit-license
+ */
+
 /* global WorldWind */
 
 $(document).ready(function () {
