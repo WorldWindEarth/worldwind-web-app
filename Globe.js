@@ -38,7 +38,7 @@ export default class Globe {
   constructor(canvasId, projectionName) {
     // Create a WorldWindow globe on the specified HTML5 canvas
     this.wwd = new WorldWind.WorldWindow(canvasId);
-    
+
     // Layer management support
     this.nextLayerId = 1;
 
@@ -305,5 +305,17 @@ export default class Globe {
         return diagonalArcLength;
       }
     }
+  }
+  /**
+   * loadLayers is a utility function used by the view models to copy
+   * layers into an observable array. The top-most layer is first in the
+   * observable array.
+   * @param {Array} layers
+   * @param {ko.observableArray} observableArray 
+   */
+  static loadLayers(layers, observableArray) {
+    observableArray.removeAll();
+    // Reverse the order of the layers to the top-most layer is first
+    layers.reverse().forEach(layer => observableArray.push(layer));
   }
 };
