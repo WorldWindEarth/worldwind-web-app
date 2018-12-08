@@ -1,444 +1,155 @@
 /* 
- * Copyright (c) 2018 Bruce Schubert.
  * The MIT License
- * http://www.opensource.org/licenses/mit-license
+ *
+ * Copyright 2018 Bruce Schubert.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 import Globe from './Globe.js';
+import LayersViewModel from './LayersViewModel.js';
+import SettingsViewModel from './SettingsViewModel.js';
+import ToolsViewModel from './ToolsViewModel.js';
+import MarkersViewModel from './MarkersViewModel.js';
+import SearchViewModel from './SearchViewModel.js';
+import SearchPreviewViewModel from './SearchPreviewViewModel.js';
 
-/* global WorldWind */
+/* global $, ko, WorldWind */
 
 $(document).ready(function () {
-    "use strict";
-    // Set your Bing Maps key which is used when requesting Bing Maps resources.
-    // Without your own key you will be using a limited WorldWind developer's key.
-    // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
-    const BING_API_KEY = "";
-    if (BING_API_KEY) {
-        // Initialize WorldWind properties before creating the first WorldWindow
-        WorldWind.BingMapsKey = BING_API_KEY;
-    } else {
-        console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
-    }
-    // Set the MapQuest API key used by their Nominatim service.
-    // Get your own key at https://developer.mapquest.com/
-    // Without your own key you will be using a limited WorldWind developer's key.
-    const MAPQUEST_API_KEY = "";
+  "use strict";
+  
+  // Set your Bing Maps key which is used when requesting Bing Maps resources.
+  // Without your own key you will be using a limited WorldWind developer's key.
+  // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
+  const BING_API_KEY = "";
+  if (BING_API_KEY) {
+    // Initialize WorldWind properties before creating the first WorldWindow
+    WorldWind.BingMapsKey = BING_API_KEY;
+  } else {
+    console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
+  }
+  
+  // Set the MapQuest API key used by their Nominatim service.
+  // Get your own key at https://developer.mapquest.com/
+  // Without your own key you will be using a limited WorldWind developer's key.
+  const MAPQUEST_API_KEY = "";
 
-    /**
-     * loadLayers is a utility function used by the view models to copy
-     * layers into an observable array. The top-most layer is first in the
-     * observable array.
-     * @param {Array} layers
-     * @param {ko.observableArray} observableArray 
-     */
-    function loadLayers(layers, observableArray) {
-        observableArray.removeAll();
-        // Reverse the order of the layers to the top-most layer is first
-        layers.reverse().forEach(layer => observableArray.push(layer));
-    };
+  // ---------------------
+  // Initialize the globe
+  // ----------------------
 
-    /**
-     * Layers view mode.
-     * @param {Globe} globe
-     * @returns {undefined}
-     */
-    function LayersViewModel(globe) {
-        var self = this;
-        self.baseLayers = ko.observableArray(globe.getLayers('base').reverse());
-        self.overlayLayers = ko.observableArray(globe.getLayers('overlay').reverse());
-        // Update the view model whenever the model changes
-        globe.getCategoryTimestamp('base').subscribe(newValue =>
-            loadLayers(globe.getLayers('base'), self.baseLayers));
-        globe.getCategoryTimestamp('overlay').subscribe(newValue =>
-            loadLayers(globe.getLayers('overlay'), self.overlayLayers));
-        // Button click event handler
-        self.toggleLayer = function (layer) {
-            globe.toggleLayer(layer);
-            // Zoom to the layer if it has a bbox assigned to it
-            if (layer.enabled && layer.bbox) {
-                globe.zoomToLayer(layer);
-            }
-        };
-    }
+  // Create the primary globe
+  let globe = new Globe("globe-canvas");
+  
+  // Add layers ordered by drawing order: first to last
+  globe.addLayer(new WorldWind.BMNGLayer(), {
+    category: "base"
+  });
+  globe.addLayer(new WorldWind.BMNGLandsatLayer(), {
+    category: "base",
+    enabled: false
+  });
+  globe.addLayer(new WorldWind.BingAerialLayer(), {
+    category: "base",
+    enabled: false
+  });
+  globe.addLayer(new WorldWind.BingAerialWithLabelsLayer(), {
+    category: "base",
+    enabled: false,
+    detailControl: 1.5
+  });
+  globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
+    category: "base",
+    enabled: false
+  });
+  globe.addLayer(new WorldWind.BingRoadsLayer(), {
+    category: "overlay",
+    enabled: false,
+    detailControl: 1.5,
+    opacity: 0.80
+  });
+  globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "overlay", {
+    category: "overlay",
+    displayName: "OpenStreetMap overlay by EOX",
+    enabled: false,
+    opacity: 0.80
+  });
+  globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
+    category: "data",
+    displayName: "Markers",
+    enabled: true
+  });
+  globe.addLayer(new WorldWind.CoordinatesDisplayLayer(globe.wwd), {
+    category: "setting"
+  });
+  globe.addLayer(new WorldWind.ViewControlsLayer(globe.wwd), {
+    category: "setting"
+  });
+  globe.addLayer(new WorldWind.CompassLayer(), {
+    category: "setting",
+    enabled: false
+  });
+  globe.addLayer(new WorldWind.StarFieldLayer(), {
+    category: "setting",
+    enabled: false,
+    displayName: "Stars"
+  });
+  globe.addLayer(new WorldWind.AtmosphereLayer(), {
+    category: "setting",
+    enabled: false,
+    time: null // new Date() // activates day/night mode
+  });
+  globe.addLayer(new WorldWind.ShowTessellationLayer(), {
+    category: "debug",
+    enabled: false
+  });
 
-    /**
-     * Settings view model.
-     * @param {Globe} globe
-     */
-    function SettingsViewModel(globe) {
-        var self = this;
-        self.settingLayers = ko.observableArray(globe.getLayers('setting').reverse());
-        self.debugLayers = ko.observableArray(globe.getLayers('debug').reverse());
-        // Update this view model whenever one of the layer categories change
-        globe.getCategoryTimestamp('setting').subscribe(newValue =>
-            loadLayers(globe.getLayers('setting'), self.settingLayers));
-        globe.getCategoryTimestamp('debug').subscribe(newValue =>
-            loadLayers(globe.getLayers('debug'), self.debugLayers));
-        // Button click event handler
-        self.toggleLayer = function (layer) {
-            globe.toggleLayer(layer);
-        };
-    }
+  // -----------------------------------------------
+  // Initialize Knockout view models and html views
+  // -----------------------------------------------
 
-    /**
-     * Tools view model for tools palette on the globe
-     * @param {Globe} globe
-     * @param {MarkersViewModel} markers
-     * @returns {ToolsViewModel}
-     */
-    function ToolsViewModel(globe, markers) {
-        var self = this,
-          imagePath = "https://unpkg.com/worldwindjs@1.6.90/build/dist/images/pushpins/";
-        // An array of pushpin marker images
-        self.markerPalette = [
-            imagePath + "castshadow-red.png",
-            imagePath + "castshadow-green.png",
-            imagePath + "castshadow-blue.png",
-            imagePath + "castshadow-orange.png",
-            imagePath + "castshadow-teal.png",
-            imagePath + "castshadow-purple.png",
-            imagePath + "castshadow-white.png",
-            imagePath + "castshadow-black.png"
-        ];
-        // The currently selected marker icon 
-        self.selectedMarkerImage = ko.observable(self.markerPalette[0]);
-        // Callback invoked by the Click/Drop event handler
-        self.dropCallback = null;
-        // The object dropped on the globe at the click location
-        self.dropObject = null;
-        // Observable boolean indicating that click/drop is armed
-        self.isDropArmed = ko.observable(false);
-        // Change the globe's cursor to crosshairs when drop is armed
-        self.isDropArmed.subscribe(armed =>
-            $(globe.wwd.canvas).css("cursor", armed ? "crosshair" : "default"));
-        // Button click event handler to arm the drop
-        self.armDropMarker = function () {
-            self.isDropArmed(true);
-            self.dropCallback = self.dropMarkerCallback;
-            self.dropObject = self.selectedMarkerImage();
-        };
-        // Set up the common placemark attributes used in the dropMarkerCallback
-        let commonAttributes = new WorldWind.PlacemarkAttributes(null);
-        commonAttributes.imageScale = 1;
-        commonAttributes.imageOffset = new WorldWind.Offset(
-            WorldWind.OFFSET_FRACTION, 0.3,
-            WorldWind.OFFSET_FRACTION, 0.0);
-        commonAttributes.imageColor = WorldWind.Color.WHITE;
-        commonAttributes.labelAttributes.offset = new WorldWind.Offset(
-            WorldWind.OFFSET_FRACTION, 0.5,
-            WorldWind.OFFSET_FRACTION, 1.0);
-        commonAttributes.labelAttributes.color = WorldWind.Color.YELLOW;
-        commonAttributes.drawLeaderLine = true;
-        commonAttributes.leaderLineAttributes.outlineColor = WorldWind.Color.RED;
-        /**
-         * "Drop" action callback creates and adds a marker (WorldWind.Placemark) to the globe.
-         *
-         * @param {WorldWind.Location} position
-         */
-        self.dropMarkerCallback = function (position) {
-            let attributes = new WorldWind.PlacemarkAttributes(commonAttributes);
-            attributes.imageSource = self.selectedMarkerImage();
-            let placemark = new WorldWind.Placemark(position, /*eyeDistanceScaling*/ true, attributes);
-            placemark.label = "Lat " + position.latitude.toPrecision(4).toString() + "\n" + "Lon " + position.longitude.toPrecision(5).toString();
-            placemark.altitudeMode = WorldWind.CLAMP_TO_GROUND;
-            placemark.eyeDistanceScalingThreshold = 2500000;
-            // Add the placemark to the layer and to the observable array
-            let layer = globe.findLayerByName("Markers");
-            layer.addRenderable(placemark);
-            markers.addMarker(placemark);
-        };
-        /**
-         * Handles a click on the WorldWindow. If a "drop" action callback has been
-         * defined, it invokes the function with the picked location.
-         * @param {Object} event
-         */
-        self.handleClick = function (event) {
-            if (!self.isDropArmed()) {
-                return;
-            }
-            // Get the clicked window coords
-            let type = event.type, x, y;
-            switch (type) {
-                case 'click':
-                    x = event.clientX;
-                    y = event.clientY;
-                    break;
-                case 'touchend':
-                    if (!event.changedTouches[0]) {
-                        return;
-                    }
-                    x = event.changedTouches[0].clientX;
-                    y = event.changedTouches[0].clientY;
-                    break;
-            }
-            if (self.dropCallback) {
-                // Get all the picked items 
-                let pickList = globe.wwd.pickTerrain(globe.wwd.canvasCoordinates(x, y));
-                // Terrain should be one of the items if the globe was clicked
-                let terrain = pickList.terrainObject();
-                if (terrain) {
-                    self.dropCallback(terrain.position, self.dropObject);
-                }
-            }
-            self.isDropArmed(false);
-            event.stopImmediatePropagation();
-        };
-        // Assign a click event handlers to the WorldWindow for Click/Drop support
-        globe.wwd.addEventListener('click', self.handleClick);
-        globe.wwd.addEventListener('touchend', self.handleClick);
-    }
+  let layers = new LayersViewModel(globe);
+  let settings = new SettingsViewModel(globe);
+  let markers = new MarkersViewModel(globe);
+  let tools = new ToolsViewModel(globe, markers);
+  let preview = new SearchPreviewViewModel(globe, MAPQUEST_API_KEY);
+  let search = new SearchViewModel(globe, preview.previewResults, MAPQUEST_API_KEY);
+  
+  // Activate the Knockout bindings between our view models and the html
+  ko.applyBindings(layers, document.getElementById('layers'));
+  ko.applyBindings(settings, document.getElementById('settings'));
+  ko.applyBindings(markers, document.getElementById('markers'));
+  ko.applyBindings(tools, document.getElementById('tools'));
+  ko.applyBindings(search, document.getElementById('search'));
+  ko.applyBindings(preview, document.getElementById('preview'));
 
-
-    /**
-     * Markers view model.
-     * @param {Globe} globe
-     * @returns {MarkersViewModel}
-     */
-    function MarkersViewModel(globe) {
-        var self = this;
-        // Observable array of markers displayed in the view
-        self.markers = ko.observableArray();
-        /**
-         * Adds a marker to the view model
-         * @param {WorldWind.Placemark} marker
-         */
-        self.addMarker = function (marker) {
-            self.markers.push(marker);
-        };
-        /** 
-         * "Goto" function centers the globe on the given marker.
-         * @param {WorldWind.Placemark} marker
-         */
-        self.gotoMarker = function (marker) {
-            globe.wwd.goTo(new WorldWind.Location(marker.position.latitude, marker.position.longitude));
-        };
-        /** 
-         * "Edit" function invokes a modal dialog to edit the marker attributes.
-         * @param {WorldWind.Placemark} marker
-         */
-        self.editMarker = function (marker) {
-            // TODO bind marker to dialog, maybe create an individual marker view-model
-            //                        var options = {};
-            //                        $('#editMarkerModal').modal(options)
-        };
-        /** 
-         * "Remove" function removes a marker from the globe.
-         * @param {WorldWind.Placemark} marker
-         */
-        self.removeMarker = function (marker) {
-            // Find and remove the marker from the layer and the observable array
-            let markerLayer = globe.findLayerByName("Markers");
-            for (let i = 0, max = self.markers().length; i < max; i++) {
-                let placemark = markerLayer.renderables[i];
-                if (placemark === marker) {
-                    markerLayer.renderables.splice(i, 1);
-                    self.markers.remove(marker);
-                    break;
-                }
-            }
-        };
-    }
-    /**
-     * Search view model. Uses the MapQuest Nominatim API. 
-     * Requires an access key. See: https://developer.mapquest.com/
-     * @param {Globe} globe
-     * @param {Function} preview Function to preview the results
-     * @returns {SearchViewModel}
-     */
-    function SearchViewModel(globe, preview) {
-        var self = this;
-        self.geocoder = new WorldWind.NominatimGeocoder();
-        self.searchText = ko.observable('');
-        self.performSearch = function () {
-            if (!MAPQUEST_API_KEY) {
-                console.error("SearchViewModel: A MapQuest API key is required to use the geocoder in production. Get your API key at https://developer.mapquest.com/");
-            }
-            // Get the value from the observable
-            let queryString = self.searchText();
-            if (queryString) {
-                if (queryString.match(WorldWind.WWUtil.latLonRegex)) {
-                    // Treat the text as a lat, lon pair 
-                    let tokens = queryString.split(",");
-                    let latitude = parseFloat(tokens[0]);
-                    let longitude = parseFloat(tokens[1]);
-                    // Center the globe on the lat, lon
-                    globe.wwd.goTo(new WorldWind.Location(latitude, longitude));
-                } else {
-                    // Treat the text as an address or place name
-                    self.geocoder.lookup(queryString, function (geocoder, results) {
-                        if (results.length > 0) {
-                            // Open the modal dialog to preview and select a result
-                            preview(results);
-                        }
-                    }, MAPQUEST_API_KEY);
-                }
-            }
-        };
-    }
-
-    /**
-     * Define the view model for the Search Preview.
-     * @param {WorldWindow} primaryGlobe
-     * @returns {PreviewViewModel}
-     */
-    function PreviewViewModel(primaryGlobe) {
-        var self = this;
-        // Show a warning message about the MapQuest API key if missing
-        this.showApiWarning = (MAPQUEST_API_KEY === null || MAPQUEST_API_KEY === "");
-        // Create secondary globe with a 2D Mercator projection for the preview
-        this.previewGlobe = new Globe("preview-canvas", "Mercator");
-        let resultsLayer = new WorldWind.RenderableLayer("Results");
-        let bingMapsLayer = new WorldWind.BingRoadsLayer();
-        bingMapsLayer.detailControl = 1.25; // Show next level-of-detail sooner. Default is 1.75
-        this.previewGlobe.addLayer(bingMapsLayer);
-        this.previewGlobe.addLayer(resultsLayer);
-        // Set up the common placemark attributes for the results
-        let placemarkAttributes = new WorldWind.PlacemarkAttributes(null);
-        placemarkAttributes.imageSource = WorldWind.configuration.baseUrl + "images/pushpins/castshadow-red.png";
-        placemarkAttributes.imageScale = 0.5;
-        placemarkAttributes.imageOffset = new WorldWind.Offset(
-            WorldWind.OFFSET_FRACTION, 0.3,
-            WorldWind.OFFSET_FRACTION, 0.0);
-        // Create an observable array who's contents are displayed in the preview
-        this.searchResults = ko.observableArray();
-        this.selected = ko.observable();
-        // Shows the given search results in a table with a preview globe/map
-        this.previewResults = function (results) {
-            if (results.length === 0) {
-                return;
-            }
-            // Clear the previous results
-            self.searchResults.removeAll();
-            resultsLayer.removeAllRenderables();
-            // Add the results to the observable array
-            results.map(item => self.searchResults.push(item));
-            // Create a simple placemark for each result
-            for (let i = 0, max = results.length; i < max; i++) {
-                let item = results[i];
-                let placemark = new WorldWind.Placemark(
-                    new WorldWind.Position(
-                        parseFloat(item.lat),
-                        parseFloat(item.lon), 100));
-                placemark.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
-                placemark.displayName = item.display_name;
-                placemark.attributes = placemarkAttributes;
-                resultsLayer.addRenderable(placemark);
-            }
-
-            // Initialize preview with the first item
-            self.previewSelection(results[0]);
-            // Display the preview dialog
-            $('#previewDialog').modal();
-            $('#previewDialog .modal-body-table').scrollTop(0);
-        };
-        this.previewSelection = function (selection) {
-            let latitude = parseFloat(selection.lat),
-                longitude = parseFloat(selection.lon),
-                location = new WorldWind.Location(latitude, longitude);
-            // Update our observable holding the selected location
-            self.selected(location);
-            // Go to the posiion
-            self.previewGlobe.wwd.goTo(location);
-        };
-        this.gotoSelected = function () {
-            // Go to the location held in the selected observable
-            primaryGlobe.wwd.goTo(self.selected());
-        };
-    }
-
-    // ---------------------
-    // Construct our web app
-    // ----------------------
-
-    // Create the primary globe
-    let globe = new Globe("globe-canvas");
-    // Add layers ordered by drawing order: first to last
-    // Add layers to the globe 
-    // Add layers ordered by drawing order: first to last
-    globe.addLayer(new WorldWind.BMNGLayer(), {
-        category: "base"
-    });
-    globe.addLayer(new WorldWind.BMNGLandsatLayer(), {
-        category: "base",
-        enabled: false
-    });
-    globe.addLayer(new WorldWind.BingAerialLayer(), {
-        category: "base",
-        enabled: false
-    });
-    globe.addLayer(new WorldWind.BingAerialWithLabelsLayer(), {
-        category: "base",
-        enabled: false,
-        detailControl: 1.5
-    });
-    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "osm", {
-        category: "base",
-        enabled: false
-    });
-    globe.addLayer(new WorldWind.BingRoadsLayer(), {
-        category: "overlay",
-        enabled: false,
-        detailControl: 1.5,
-        opacity: 0.80
-    });
-    globe.addLayerFromWms("https://tiles.maps.eox.at/wms", "overlay", {
-        category: "overlay",
-        displayName: "OpenStreetMap overlay by EOX",
-        enabled: false,
-        opacity: 0.80
-    });
-    globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
-        category: "data",
-        displayName: "Markers",
-        enabled: true
-    });
-    globe.addLayer(new WorldWind.CoordinatesDisplayLayer(globe.wwd), {
-        category: "setting"
-    });
-    globe.addLayer(new WorldWind.ViewControlsLayer(globe.wwd), {
-        category: "setting"
-    });
-    globe.addLayer(new WorldWind.CompassLayer(), {
-        category: "setting",
-        enabled: false
-    });
-    globe.addLayer(new WorldWind.StarFieldLayer(), {
-        category: "setting",
-        enabled: false,
-        displayName: "Stars"
-    });
-    globe.addLayer(new WorldWind.AtmosphereLayer(), {
-        category: "setting",
-        enabled: false,
-        time: null // new Date() // activates day/night mode
-    });
-    globe.addLayer(new WorldWind.ShowTessellationLayer(), {
-        category: "debug",
-        enabled: false
-    });
-    
-
-    // Activate the Knockout bindings between our view models and the html
-    let layers = new LayersViewModel(globe);
-    let settings = new SettingsViewModel(globe);
-    let markers = new MarkersViewModel(globe);
-    let tools = new ToolsViewModel(globe, markers);
-    let preview = new PreviewViewModel(globe);
-    let search = new SearchViewModel(globe, preview.previewResults);
-    ko.applyBindings(layers, document.getElementById('layers'));
-    ko.applyBindings(settings, document.getElementById('settings'));
-    ko.applyBindings(markers, document.getElementById('markers'));
-    ko.applyBindings(tools, document.getElementById('tools'));
-    ko.applyBindings(search, document.getElementById('search'));
-    ko.applyBindings(preview, document.getElementById('preview'));
-    
-    // Auto-collapse the main menu when its button items are clicked
-    $('.navbar-collapse a[role="button"]').click(function () {
-        $('.navbar-collapse').collapse('hide');
-    });
-    // Collapse card ancestors when the close icon is clicked
-    $('.collapse .close').on('click', function () {
-        $(this).closest('.collapse').collapse('hide');
-    });
+  // ---------------------------------------------------------
+  // Add UI event handlers to create a better user experience
+  // ---------------------------------------------------------
+  
+  // Auto-collapse the main menu when its button items are clicked
+  $('.navbar-collapse a[role="button"]').click(function () {
+    $('.navbar-collapse').collapse('hide');
+  });
+  // Collapse card ancestors when the close icon is clicked
+  $('.collapse .close').on('click', function () {
+    $(this).closest('.collapse').collapse('hide');
+  });
 });
