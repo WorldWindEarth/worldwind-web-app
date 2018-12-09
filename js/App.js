@@ -34,7 +34,7 @@ import SearchPreviewViewModel from './SearchPreviewViewModel.js';
 
 $(document).ready(function () {
   "use strict";
-  
+
   // Set your Bing Maps key which is used when requesting Bing Maps resources.
   // Without your own key you will be using a limited WorldWind developer's key.
   // See: https://www.bingmapsportal.com/ to register for your own key and then enter it below:
@@ -45,7 +45,7 @@ $(document).ready(function () {
   } else {
     console.error("app.js: A Bing API key is required to use the Bing maps in production. Get your API key at https://www.bingmapsportal.com/");
   }
-  
+
   // Set the MapQuest API key used by their Nominatim service.
   // Get your own key at https://developer.mapquest.com/
   // Without your own key you will be using a limited WorldWind developer's key.
@@ -57,7 +57,7 @@ $(document).ready(function () {
 
   // Create the primary globe
   let globe = new Globe("globe-canvas");
-  
+
   // Add layers ordered by drawing order: first to last
   globe.addLayer(new WorldWind.BMNGLayer(), {
     category: "base"
@@ -89,6 +89,12 @@ $(document).ready(function () {
     category: "overlay",
     displayName: "OpenStreetMap overlay by EOX",
     enabled: false,
+    opacity: 0.80
+  });
+  // NASA RECOVER Demo
+  globe.addLayerFromWms("http://recover.giscenter.isu.edu/arcgis/services/RECOVER3_BrianheadFire_UT/dNBR/MapServer/WMSServer", "0", {
+    category: "overlay",
+    enabled: true,
     opacity: 0.80
   });
   globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
@@ -131,7 +137,7 @@ $(document).ready(function () {
   let tools = new ToolsViewModel(globe, markers);
   let preview = new SearchPreviewViewModel(globe, MAPQUEST_API_KEY);
   let search = new SearchViewModel(globe, preview.previewResults, MAPQUEST_API_KEY);
-  
+
   // Activate the Knockout bindings between our view models and the html
   ko.applyBindings(layers, document.getElementById('layers'));
   ko.applyBindings(settings, document.getElementById('settings'));
@@ -143,7 +149,7 @@ $(document).ready(function () {
   // ---------------------------------------------------------
   // Add UI event handlers to create a better user experience
   // ---------------------------------------------------------
-  
+
   // Auto-collapse the main menu when its button items are clicked
   $('.navbar-collapse a[role="button"]').click(function () {
     $('.navbar-collapse').collapse('hide');
