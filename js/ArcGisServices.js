@@ -24,6 +24,10 @@
 
 /*global define, $, WorldWind */
 
+/**
+ * See: https://developers.arcgis.com/rest/services-reference/get-started-with-the-services-directory.htm
+ */
+
 export default class ArcGisServices {
   /**
    * Constructs an ArcGisServices object for the given endpoint.
