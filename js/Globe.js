@@ -153,6 +153,11 @@ export default class Globe {
     }
     // Signal a change in the category
     this.updateCategoryTimestamp(layer.category);
+    
+    // Zoom to this layer's bbox extents if indicated
+    if (layer.zoomToEnabled) {
+        this.zoomToLayer(layer);
+    }
   }
 
   /**

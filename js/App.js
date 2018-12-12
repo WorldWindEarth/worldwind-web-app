@@ -95,7 +95,8 @@ $(document).ready(function () {
   globe.addLayerFromWms("http://recover.giscenter.isu.edu/arcgis/services/RECOVER3_BrianheadFire_UT/dNBR/MapServer/WMSServer", "0", {
     category: "overlay",
     enabled: true,
-    opacity: 0.80
+    opacity: 0.80,
+    zoomToEnabled: true
   });
   globe.addLayer(new WorldWind.RenderableLayer("Markers"), {
     category: "data",
