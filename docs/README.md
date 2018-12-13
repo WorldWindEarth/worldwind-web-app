@@ -2,7 +2,7 @@
 
 This project displays the [NASA RECOVER](http://giscenter.isu.edu/research/Techpg/nasa_RECOVER/) project's ArcGIS data in a [NASA WorldWind](https://worldwind.arc.nasa.gov/web/)-based 3D geo-browser.
 
-Check out the [Integration Demo](http://worldwind.earth/recover?folder=RECOVER3_BrianheadFire_UT&default=Fire%20Affected%20Vegetation%20(dNBR)).
+Check out the [Integration Demo](http://worldwind.earth/recover?folder=RECOVER3_BrianheadFire_UT&default=Fire%20Affected%20Vegetation%20(dNBR)). The demo uses mixed http/https content. You will have to enable mixed content in your browser to view the RECOVER data.
 
 This NASA WorldWind-based geobrowser was built from Emxsys' [WorldWind GeoBrowser Template](https://github.com/emxsys/worldwind-web-app)
 
