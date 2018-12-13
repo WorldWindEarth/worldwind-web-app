@@ -1,6 +1,7 @@
 body {
     /*Account for the navbar*/
     padding-top: 3.5rem;
+    overflow-y: hidden;
 }
 
 .globe {
@@ -54,7 +55,10 @@ body {
   overflow-y: auto;
 }
 
-
+.layers-body {
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+}
 
 /*Extra small devices (portrait phones, less than 576px)*/
 @media (max-width: 575.98px) {
