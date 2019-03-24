@@ -33,7 +33,7 @@ export default class ToolsViewModel {
    */
   constructor(globe, markers) {
     let self = this;
-    let imagePath = "https://unpkg.com/worldwindjs@1.6.90/build/dist/images/pushpins/";
+    let imagePath = "https://unpkg.com/worldwindjs@1.7.0/build/dist/images/pushpins/";
     this.globe = globe;
     this.markers = markers;
     // An array of pushpin marker images
